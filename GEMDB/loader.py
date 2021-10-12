@@ -54,38 +54,60 @@ def list_market():
     return setting.market_list
 
 
+# def list_market_data(market_name: str):
+#     market_abstract = _get_market_abstract(market_name)
+#     return market_abstract.keys()
 def list_market_data(market_name: str):
-    market_abstract = _get_market_abstract(market_name)
-    return market_abstract.keys()
+    _check_market(market_name)
+    _check_setting()
+    market_path = _get_market_path(market_name)
+    data_dirs = os.listdir(market_path)
+    return data_dirs
 
 
+# def list_data_range(market_name: str, data_name: str):
+#     market_abstract = _get_market_abstract(market_name)
+#     data_abstract = _get_data_abstract(market_name, market_abstract, data_name)
+#     return (data_abstract['fr'], data_abstract['to'])
 def list_data_range(market_name: str, data_name: str):
-    market_abstract = _get_market_abstract(market_name)
-    data_abstract = _get_data_abstract(market_name, market_abstract, data_name)
-    return (data_abstract['fr'], data_abstract['to'])
+    _check_market(market_name)
+    _check_setting()
+    market_path = _get_market_path(market_name)
+    data_dir = os.path.join(market_path,data_name)
+
+    data_filenames = os.listdir(data_dir)
+    data_filenames.sort()
+
+    return (data_filenames[0], data_filenames[-1])
 
 
 def copy_data(market_name: str, data_name: str, save_dir: str, fr: str = None, to: str = None):
-    market_abstract = _get_market_abstract(market_name)
-    data_dir = market_abstract[data_name]['dir_name']
-    data_abstract = _get_data_abstract(market_name, market_abstract, data_name)
-    data_file_list = data_abstract['file_list'].copy()
+    _check_market(market_name)
+    _check_setting()
+    market_path = _get_market_path(market_name)
+    data_dir = os.path.join(market_path,data_name)
+    data_filenames = os.listdir(data_dir)
+    data_filenames.sort()
 
     if fr is None:
-        fr = data_file_list[0]
+        fr = data_filenames[0]
     if to is None:
-        to = data_file_list[-1]
+        to = data_filenames[-1]
     print(f'Copy data from {fr} to {to}...')
     print('It may take a long time, please wait.')
 
-    for filename in tqdm(data_file_list):
-        if not fr <= filename <= to:
-            continue
-        source_path = os.path.join(
-            _get_market_path(market_name), data_dir, filename)
+    data_filenames_selected = []    
+    for filename in data_filenames:
+        if fr <= filename < to:
+            data_filenames_selected.append(filename)
+
+    for filename in tqdm(data_filenames_selected):
+        source_path = os.path.join(data_dir, filename)
         target_path = os.path.join(save_dir, filename)
         try:
             shutil.copy(source_path, target_path)
         except:
             raise RuntimeError(f'Copy Error when copy file {filename}')
+    
+    print('Finish!')
     return
