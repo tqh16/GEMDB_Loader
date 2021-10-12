@@ -1,7 +1,8 @@
 import os
-import setting
+from . import setting
 import json
 import shutil
+from tqdm import tqdm
 
 
 def _check_market(market):
@@ -22,9 +23,9 @@ def _get_market_path(market):
 
 def _get_market_abstract(market):
     _check_market(market)
+    _check_setting()
     market_path = _get_market_path(market)
 
-    _check_setting()
     try:
         with open(os.path.join(market_path, 'market_abstract.json'), 'r') as f:
             market_abstract = json.load(f)
@@ -42,6 +43,11 @@ def _get_data_abstract(market, market_abstract, data):
     except:
         raise NotImplementedError(f'Data information does not exist!')
     return data_abstract
+
+
+def set_GEMDB_dir(dir: str):
+    setting.path_root = dir
+    return
 
 
 def list_market():
@@ -69,7 +75,10 @@ def copy_data(market_name: str, data_name: str, save_dir: str, fr: str = None, t
         fr = data_file_list[0]
     if to is None:
         to = data_file_list[-1]
-    for filename in data_file_list:
+    print(f'Copy data from {fr} to {to}...')
+    print('It may take a long time, please wait.')
+
+    for filename in tqdm(data_file_list):
         if not fr <= filename <= to:
             continue
         source_path = os.path.join(
